@@ -89,8 +89,13 @@
                                             <td class="px-6 py-4 whitespace-nowrap">
                                                 @if($patient->isAdmitted)
                                                     <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                                                        Currently Admitted
+                                                        Admitted
                                                     </span>
+                                                    @if($patient->activeAdmission() && $patient->activeAdmission()->dischargeChecklist)
+                                                        <span class="ml-1 px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-orange-100 text-orange-800">
+                                                            Discharge in Progress ({{ $patient->activeAdmission()->dischargeChecklist->completion_percentage }}%)
+                                                        </span>
+                                                    @endif
                                                 @else
                                                     <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
                                                         Not Admitted

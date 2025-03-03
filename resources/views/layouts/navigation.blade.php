@@ -88,6 +88,10 @@
                     <x-nav-link :href="route('bed-management.statistics')" :active="request()->routeIs('bed-management.statistics')">
                         {{ __('Statistics') }}
                     </x-nav-link>
+                    
+                    <x-nav-link :href="route('discharge-checklist.index')" :active="request()->routeIs('discharge-checklist.*')">
+                        {{ __('Discharge Checklists') }}
+                    </x-nav-link>
                 </div>
             </div>
 
@@ -191,6 +195,10 @@
             
             <x-responsive-nav-link :href="route('bed-management.statistics')" :active="request()->routeIs('bed-management.statistics')">
                 {{ __('Statistics') }}
+            </x-responsive-nav-link>
+            
+            <x-responsive-nav-link :href="route('discharge-checklist.index')" :active="request()->routeIs('discharge-checklist.*')">
+                {{ __('Discharge Checklists') }}
             </x-responsive-nav-link>
         </div>
 

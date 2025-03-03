@@ -122,6 +122,15 @@ Route::middleware('auth')->group(function () {
         Route::patch('/vital-signs/{vitalSign}', [VitalSignController::class, 'update'])->name('vital-signs.update');
         Route::delete('/vital-signs/{vitalSign}', [VitalSignController::class, 'destroy'])->name('vital-signs.destroy');
         Route::get('/admissions/{admission}/vital-signs/create', [VitalSignController::class, 'createForAdmission'])->name('vital-signs.create-for-admission');
+        
+        // Discharge Checklist Routes
+        Route::get('/discharge-checklists', [App\Http\Controllers\DischargeChecklistController::class, 'index'])->name('discharge-checklist.index');
+        Route::get('/discharge-checklists/{dischargeChecklist}', [App\Http\Controllers\DischargeChecklistController::class, 'show'])->name('discharge-checklist.show');
+        Route::get('/discharge-checklists/{dischargeChecklist}/edit', [App\Http\Controllers\DischargeChecklistController::class, 'edit'])->name('discharge-checklist.edit');
+        Route::patch('/discharge-checklists/{dischargeChecklist}', [App\Http\Controllers\DischargeChecklistController::class, 'update'])->name('discharge-checklist.update');
+        Route::post('/discharge-checklists/{dischargeChecklist}/complete', [App\Http\Controllers\DischargeChecklistController::class, 'completeDischarge'])->name('discharge-checklist.complete');
+        Route::post('/discharge-checklists/{dischargeChecklist}/complete-item/{item}', [App\Http\Controllers\DischargeChecklistController::class, 'completeItem'])->name('discharge-checklist.complete-item');
+        Route::post('/admissions/{admission}/start-discharge', [App\Http\Controllers\DischargeChecklistController::class, 'startDischargeProcess'])->name('admissions.start-discharge');
     });
 });
 

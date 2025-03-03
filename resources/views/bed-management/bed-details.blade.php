@@ -130,6 +130,16 @@
                             <div class="mt-4 flex space-x-4">
                                 <a href="{{ route('patients.show', ['patient' => $bed->currentAdmission()->patient, 'from' => 'bed-map']) }}" class="text-sm text-indigo-600 hover:text-indigo-900">View Patient Record</a>
                                 <a href="{{ route('admissions.show', $bed->currentAdmission()) }}" class="text-sm text-indigo-600 hover:text-indigo-900">View Admission Details</a>
+                                
+                                @if($bed->currentAdmission()->dischargeChecklist)
+                                    <a href="{{ route('discharge-checklist.edit', $bed->currentAdmission()->dischargeChecklist) }}" class="text-sm text-orange-600 hover:text-orange-900">Continue Discharge Process</a>
+                                @else
+                                    <form action="{{ route('admissions.start-discharge', $bed->currentAdmission()) }}" method="POST" class="inline">
+                                        @csrf
+                                        <button type="submit" class="text-sm text-orange-600 hover:text-orange-900 bg-transparent border-0 p-0 cursor-pointer">Start Discharge Process</button>
+                                    </form>
+                                @endif
+                                
                                 <form action="{{ route('beds.mark-available', $bed) }}" method="POST" class="inline">
                                     @csrf
                                     @method('PATCH')

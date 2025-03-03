@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Qmed Smartward Solution
 
 A comprehensive bed management system for healthcare facilities with vital sign device integrations.
@@ -97,3 +98,6 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 ## Support
 
 For support and questions, please contact support@qmedsolutions.com
+=======
+# smartward2.1
+>>>>>>> 508a3d473b532bf2e6221c14e71d056d07f905dc

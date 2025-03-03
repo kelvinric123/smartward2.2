@@ -20,7 +20,7 @@
             <div class="p-6 bg-white border-b border-gray-200">
                 <div class="flex justify-between items-center mb-6">
                     <h2 class="text-xl font-semibold text-gray-800">Admission Information</h2>
-                    <div class="flex space-x-2">
+                    <div class="flex space-x-3 items-center">
                         <span class="px-2 py-1 text-xs rounded-full
                             @if($admission->status === 'active') bg-green-100 text-green-800
                             @elseif($admission->status === 'discharged') bg-red-100 text-red-800
@@ -29,6 +29,21 @@
                             @endif">
                             {{ ucfirst($admission->status) }}
                         </span>
+                        
+                        @if($admission->status === 'active')
+                            @if($admission->dischargeChecklist)
+                                <a href="{{ route('discharge-checklist.edit', $admission->dischargeChecklist) }}" class="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                    Continue Discharge Process ({{ $admission->dischargeChecklist->completion_percentage }}%)
+                                </a>
+                            @else
+                                <form action="{{ route('admissions.start-discharge', $admission) }}" method="POST">
+                                    @csrf
+                                    <button type="submit" class="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                                        Start Discharge Process
+                                    </button>
+                                </form>
+                            @endif
+                        @endif
                     </div>
                 </div>
                 

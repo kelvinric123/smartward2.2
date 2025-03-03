@@ -68,6 +68,14 @@ class Admission extends Model
         return $this->hasMany(TransferHistory::class);
     }
 
+    /**
+     * Get the discharge checklist for this admission.
+     */
+    public function dischargeChecklist()
+    {
+        return $this->hasOne(DischargeChecklist::class);
+    }
+
     // Helper methods
     public function isActive()
     {
@@ -93,6 +101,47 @@ class Admission extends Model
         }
 
         return $this;
+    }
+
+    /**
+     * Start the discharge process with a checklist.
+     * 
+     * @return \App\Models\DischargeChecklist
+     */
+    public function startDischargeProcess()
+    {
+        // Check if a checklist already exists
+        if ($this->dischargeChecklist) {
+            return $this->dischargeChecklist;
+        }
+        
+        // Create a new discharge checklist
+        return $this->dischargeChecklist()->create([
+            'patient_id' => $this->patient_id,
+            'status' => 'in_progress',
+        ]);
+    }
+
+    /**
+     * Complete the discharge process.
+     * 
+     * @param array $checklistData Additional checklist data or updates
+     * @param string|null $notes Discharge notes
+     * @return \App\Models\Admission
+     */
+    public function completeDischargeProcess(array $checklistData = [], $notes = null)
+    {
+        // Update the checklist
+        if ($this->dischargeChecklist) {
+            $this->dischargeChecklist->update(array_merge([
+                'completed_by' => auth()->id(),
+                'completed_at' => now(),
+                'status' => 'completed',
+            ], $checklistData));
+        }
+        
+        // Discharge the patient
+        return $this->discharge($notes);
     }
 
     public function transfer(Bed $newBed, $notes = null)
