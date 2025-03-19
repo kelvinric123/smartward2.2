@@ -19,11 +19,26 @@ class Nurse extends Model
         'position',
         'ward_assignment',
         'shift',
+        'roster',
+        'shift_preferences',
+        'last_roster_update',
+        'roster_notes',
         'status',
         'contact_number',
         'email',
         'employment_date',
         'notes',
+    ];
+    
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array
+     */
+    protected $casts = [
+        'roster' => 'array',
+        'shift_preferences' => 'array',
+        'last_roster_update' => 'datetime',
     ];
     
     /**

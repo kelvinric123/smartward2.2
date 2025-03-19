@@ -16,6 +16,30 @@
 
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
+        
+        <!-- Fix for bottom navigation -->
+        <style>
+            /* Ensure the bottom navigation is positioned correctly */
+            .fixed-bottom-nav {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                background: white;
+                z-index: 50;
+                box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+            }
+            
+            /* Add padding to the main content to prevent overlap with bottom nav */
+            main {
+                padding-bottom: 60px; /* Adjust this value based on the height of your bottom nav */
+            }
+            
+            /* Ensure content has appropriate spacing */
+            .min-h-screen {
+                padding-bottom: 60px;
+            }
+        </style>
     </head>
     <body class="font-sans antialiased">
         <div class="min-h-screen bg-gray-100">

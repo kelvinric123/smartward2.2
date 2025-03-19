@@ -79,6 +79,7 @@ class PatientController extends Controller
         // Get navigation parameters for the back button
         $from = $request->input('from');
         $wardId = $request->input('ward_id');
+        $bedId = $request->input('bed_id');
         $subsection = $request->input('subsection');
         $consultantId = $request->input('consultant_id');
         
@@ -98,9 +99,12 @@ class PatientController extends Controller
             }
             
             $backUrl = route('bed-management.bed-map', $params);
+        } elseif ($from === 'bed-details' && $bedId) {
+            // If coming from a specific bed details page
+            $backUrl = route('beds.show', $bedId);
         }
         
-        return view('patients.show', compact('patient', 'backUrl', 'from', 'wardId', 'subsection', 'consultantId'));
+        return view('patients.show', compact('patient', 'backUrl', 'from', 'wardId', 'bedId', 'subsection', 'consultantId'));
     }
 
     /**

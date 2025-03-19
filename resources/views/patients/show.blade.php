@@ -12,7 +12,11 @@
                     <div class="mb-6 flex justify-between items-center">
                         @if(isset($backUrl))
                             <a href="{{ $backUrl }}" class="text-indigo-600 hover:text-indigo-900">
-                                ← Back to Bed Map
+                                @if(isset($from) && $from === 'bed-details')
+                                    ← Back to Bed Details
+                                @else
+                                    ← Back to Bed Map
+                                @endif
                             </a>
                         @elseif(request()->has('from') && request()->get('from') === 'bed-map')
                             @if(request()->has('ward_id'))

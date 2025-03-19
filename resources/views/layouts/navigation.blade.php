@@ -73,6 +73,9 @@
                             <x-dropdown-link :href="route('medical-professional.nurses')">
                                 {{ __('Nurses') }}
                             </x-dropdown-link>
+                            <x-dropdown-link :href="route('medical-professional.roster')">
+                                {{ __('Nurse Roster') }}
+                            </x-dropdown-link>
                         </x-slot>
                     </x-dropdown>
                     
@@ -182,6 +185,9 @@
             </x-responsive-nav-link>
             <x-responsive-nav-link :href="route('medical-professional.nurses')" :active="request()->routeIs('medical-professional.nurses')">
                 {{ __('Nurses') }}
+            </x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('medical-professional.roster')" :active="request()->routeIs('medical-professional.roster')">
+                {{ __('Nurse Roster') }}
             </x-responsive-nav-link>
             
             <!-- Responsive Bed Management Navigation -->

@@ -5,6 +5,8 @@
 @section('header', 'Bed Map Overview')
 
 @section('content')
+    <!-- Add bed-management-container class for proper padding -->
+    <div class="bed-management-container">
     <!-- Fullscreen Styles -->
     <style>
         /* Styles applied when in fullscreen mode */
@@ -733,3 +735,5 @@
             }
         });
     </script>
+    </div>
+@endsection

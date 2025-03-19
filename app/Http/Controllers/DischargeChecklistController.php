@@ -11,7 +11,7 @@ class DischargeChecklistController extends Controller
     /**
      * Start the discharge process for an admission.
      */
-    public function startDischargeProcess(Admission $admission)
+    public function startDischargeProcess(Request $request, Admission $admission)
     {
         // Check if admission is active
         if (!$admission->isActive()) {
@@ -26,18 +26,29 @@ class DischargeChecklistController extends Controller
             'planned_discharge_date' => $admission->admission_date->copy()->addDays(7)
         ]);
         
-        return redirect()->route('discharge-checklist.edit', $checklist)
-            ->with('success', 'Discharge process started successfully.');
+        // Get source parameters
+        $from = $request->input('from');
+        $bedId = $request->input('bed_id');
+        
+        return redirect()->route('discharge-checklist.edit', [
+            'dischargeChecklist' => $checklist,
+            'from' => $from,
+            'bed_id' => $bedId
+        ])->with('success', 'Discharge process started successfully.');
     }
     
     /**
      * Show the discharge checklist form.
      */
-    public function edit(DischargeChecklist $dischargeChecklist)
+    public function edit(Request $request, DischargeChecklist $dischargeChecklist)
     {
         $dischargeChecklist->load('admission.patient', 'admission.bed.ward');
         
-        return view('discharge-checklist.edit', compact('dischargeChecklist'));
+        // Get source parameters
+        $from = $request->input('from');
+        $bedId = $request->input('bed_id');
+        
+        return view('discharge-checklist.edit', compact('dischargeChecklist', 'from', 'bedId'));
     }
     
     /**
@@ -64,7 +75,15 @@ class DischargeChecklistController extends Controller
         
         $dischargeChecklist->update($validated);
         
-        return back()->with('success', 'Discharge checklist updated successfully.');
+        // Preserve source parameters for proper back navigation
+        $from = $request->input('from');
+        $bedId = $request->input('bed_id');
+        
+        return redirect()->route('discharge-checklist.edit', [
+            'dischargeChecklist' => $dischargeChecklist,
+            'from' => $from,
+            'bed_id' => $bedId
+        ])->with('success', 'Discharge checklist updated successfully.');
     }
     
     /**
@@ -103,6 +122,17 @@ class DischargeChecklistController extends Controller
         // Complete the discharge process
         $admission->completeDischargeProcess($validated, $dischargeNotes);
         
+        // Get source parameters
+        $from = $request->input('from');
+        $bedId = $request->input('bed_id');
+        
+        // If coming from bed details, go back to bed details
+        if ($from === 'bed-details' && $bedId) {
+            return redirect()->route('beds.show', $bedId)
+                ->with('success', 'Patient discharged successfully.');
+        }
+        
+        // Otherwise go to patient details
         return redirect()->route('patients.show', $admission->patient)
             ->with('success', 'Patient discharged successfully.');
     }
@@ -154,6 +184,14 @@ class DischargeChecklistController extends Controller
         
         $dischargeChecklist->update($validated);
         
-        return back()->with('success', ucfirst(str_replace('_', ' ', $item)) . ' marked as completed.');
+        // Preserve source parameters for proper back navigation
+        $from = $request->input('from');
+        $bedId = $request->input('bed_id');
+        
+        return redirect()->route('discharge-checklist.edit', [
+            'dischargeChecklist' => $dischargeChecklist,
+            'from' => $from,
+            'bed_id' => $bedId
+        ])->with('success', ucfirst(str_replace('_', ' ', $item)) . ' marked as completed.');
     }
 }

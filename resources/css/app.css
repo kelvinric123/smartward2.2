@@ -1,3 +1,35 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Fix for bottom navigation overlap */
+.bed-management-container {
+    padding-bottom: 70px; /* Ensure content isn't covered by the bottom nav */
+}
+
+/* Mobile navigation bar fix */
+#bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 50;
+    background-color: white;
+    border-top: 1px solid #e5e7eb;
+    box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.05);
+}
+
+/* Bottom navigation items styling */
+.bottom-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 8px;
+    font-size: 12px;
+}
+
+/* Space between content and nav */
+main {
+    padding-bottom: 60px;
+}

@@ -7,6 +7,7 @@ use App\Http\Controllers\MedicalProfessionalController;
 use App\Http\Controllers\ConsultantController;
 use App\Http\Controllers\VitalSignController;
 use App\Http\Controllers\NurseController;
+use App\Http\Controllers\RosterController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -47,11 +48,18 @@ Route::middleware('auth')->group(function () {
     // Nurse Management Routes
     Route::resource('nurses', NurseController::class);
     Route::patch('/nurses/{nurse}/deactivate', [NurseController::class, 'deactivate'])->name('nurses.deactivate');
+
+    // Nurse Roster Management Routes
+    Route::get('/roster', [RosterController::class, 'index'])->name('roster.index');
+    Route::get('/roster/{nurse}/edit', [RosterController::class, 'edit'])->name('roster.edit');
+    Route::patch('/roster/{nurse}', [RosterController::class, 'update'])->name('roster.update');
+    Route::get('/roster/ward/{wardName}', [RosterController::class, 'wardRoster'])->name('roster.ward');
     
     // Medical Professional Routes - Accessible to doctor, admin, and superadmin roles
     Route::middleware('role:doctor')->group(function() {
         Route::get('/medical-professional/consultants', [MedicalProfessionalController::class, 'consultants'])->name('medical-professional.consultants');
         Route::get('/medical-professional/nurses', [MedicalProfessionalController::class, 'nurses'])->name('medical-professional.nurses');
+        Route::get('/medical-professional/roster', [MedicalProfessionalController::class, 'roster'])->name('medical-professional.roster');
         
         // OT Scheduling Routes
         Route::get('/ot-scheduling/dashboard', [App\Http\Controllers\OTSchedulingController::class, 'dashboard'])->name('ot-scheduling.dashboard');

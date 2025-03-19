@@ -5,9 +5,15 @@
                 {{ __('Discharge Checklist') }}
             </h2>
             <div>
-                <a href="{{ route('patients.show', $dischargeChecklist->patient) }}" class="inline-flex items-center px-4 py-2 bg-gray-200 border border-transparent rounded-md font-semibold text-xs text-gray-800 uppercase tracking-widest hover:bg-gray-300 active:bg-gray-400 focus:outline-none focus:border-gray-500 focus:ring ring-gray-300 disabled:opacity-25 transition ease-in-out duration-150">
-                    {{ __('Back to Patient') }}
-                </a>
+                @if(isset($from) && $from === 'bed-details' && isset($bedId))
+                    <a href="{{ route('beds.show', $bedId) }}" class="inline-flex items-center px-4 py-2 bg-gray-200 border border-transparent rounded-md font-semibold text-xs text-gray-800 uppercase tracking-widest hover:bg-gray-300 active:bg-gray-400 focus:outline-none focus:border-gray-500 focus:ring ring-gray-300 disabled:opacity-25 transition ease-in-out duration-150">
+                        {{ __('Back to Bed Details') }}
+                    </a>
+                @else
+                    <a href="{{ route('patients.show', $dischargeChecklist->patient) }}" class="inline-flex items-center px-4 py-2 bg-gray-200 border border-transparent rounded-md font-semibold text-xs text-gray-800 uppercase tracking-widest hover:bg-gray-300 active:bg-gray-400 focus:outline-none focus:border-gray-500 focus:ring ring-gray-300 disabled:opacity-25 transition ease-in-out duration-150">
+                        {{ __('Back to Patient') }}
+                    </a>
+                @endif
             </div>
         </div>
     </x-slot>
@@ -62,6 +68,14 @@
                         @csrf
                         @method('PATCH')
                         
+                        @if(isset($from))
+                            <input type="hidden" name="from" value="{{ $from }}">
+                        @endif
+                        
+                        @if(isset($bedId))
+                            <input type="hidden" name="bed_id" value="{{ $bedId }}">
+                        @endif
+                        
                         <div class="space-y-4">
                             <div>
                                 <label for="planned_discharge_date" class="block text-sm font-medium text-gray-700">Planned Discharge Date</label>
@@ -84,6 +98,15 @@
                                                 @csrf
                                                 <input type="hidden" name="blood_test_results" value="1">
                                                 <input type="hidden" name="blood_test_results_notes" value="{{ old('blood_test_results_notes', $dischargeChecklist->blood_test_results_notes) }}">
+                                                
+                                                @if(isset($from))
+                                                    <input type="hidden" name="from" value="{{ $from }}">
+                                                @endif
+                                                
+                                                @if(isset($bedId))
+                                                    <input type="hidden" name="bed_id" value="{{ $bedId }}">
+                                                @endif
+                                                
                                                 <button type="submit" class="inline-flex items-center px-3 py-1 bg-green-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-green-700 active:bg-green-800 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
                                                     {{ __('Complete') }}
                                                 </button>
@@ -248,6 +271,14 @@
                             <input type="hidden" name="documentation_notes" value="{{ $dischargeChecklist->documentation_notes }}">
                             <input type="hidden" name="additional_notes" value="{{ $dischargeChecklist->additional_notes }}">
                             <input type="hidden" name="planned_discharge_date" value="{{ $dischargeChecklist->planned_discharge_date ? $dischargeChecklist->planned_discharge_date->format('Y-m-d') : '' }}">
+                            
+                            @if(isset($from))
+                                <input type="hidden" name="from" value="{{ $from }}">
+                            @endif
+                            
+                            @if(isset($bedId))
+                                <input type="hidden" name="bed_id" value="{{ $bedId }}">
+                            @endif
                             
                             <div>
                                 <label for="discharge_notes" class="block text-sm font-medium text-gray-700">Discharge Notes</label>
