@@ -176,6 +176,26 @@ class VitalSignController extends Controller
         
         $vitalSign = VitalSign::create($validated);
         
+        // Get navigation parameters for preserving context
+        $from = $request->input('from');
+        $wardId = $request->input('ward_id');
+        $subsection = $request->input('subsection');
+        $consultantId = $request->input('consultant_id');
+        
+        // Prepare query parameters for redirect
+        $redirectParams = [];
+        if ($from) $redirectParams['from'] = $from;
+        if ($wardId) $redirectParams['ward_id'] = $wardId;
+        if ($subsection !== null) $redirectParams['subsection'] = $subsection;
+        if ($consultantId) $redirectParams['consultant_id'] = $consultantId;
+        
+        // Redirect back to bed map directly if that's the origin
+        if ($from === 'bed-map' && $wardId) {
+            return redirect()
+                ->route('bed-management.bed-map', $redirectParams)
+                ->with('success', 'Vital signs recorded successfully.');
+        }
+        
         if ($request->has('admission_id')) {
             // Serious debugging - get actual details about what's happening
             try {
@@ -188,12 +208,12 @@ class VitalSignController extends Controller
                 if (!$admissionExists) {
                     // If the admission doesn't exist, don't try to redirect to it
                     return redirect()
-                        ->route('patients.show', ['patient' => $vitalSign->patient_id])
+                        ->route('patients.show', array_merge(['patient' => $vitalSign->patient_id], $redirectParams))
                         ->with('warning', 'Vital signs recorded, but referenced admission not found.');
                 }
                 
                 // Try the direct URL approach to bypass route generation issues
-                return redirect("/admissions/{$admId}")
+                return redirect("/admissions/{$admId}?" . http_build_query($redirectParams))
                     ->with('success', 'Vital signs recorded successfully.');
                     
             } catch (\Exception $e) {
@@ -201,13 +221,13 @@ class VitalSignController extends Controller
                 \Log::error('Error redirecting to admission: ' . $e->getMessage());
                 
                 return redirect()
-                    ->route('patients.show', ['patient' => $vitalSign->patient_id])
+                    ->route('patients.show', array_merge(['patient' => $vitalSign->patient_id], $redirectParams))
                     ->with('warning', 'Vital signs recorded, but could not view admission details.');
             }
         }
         
         return redirect()
-            ->route('patients.show', ['patient' => $vitalSign->patient_id])
+            ->route('patients.show', array_merge(['patient' => $vitalSign->patient_id], $redirectParams))
             ->with('success', 'Vital signs recorded successfully.');
     }
 
@@ -323,7 +343,7 @@ class VitalSignController extends Controller
     /**
      * Show form to create vital signs for a specific admission.
      */
-    public function createForAdmission(Admission $admission)
+    public function createForAdmission(Request $request, Admission $admission)
     {
         // Safety check - ensure the admission exists
         if (!$admission || !$admission->exists) {
@@ -343,6 +363,30 @@ class VitalSignController extends Controller
                 ->with('warning', 'The patient record for this admission could not be found.');
         }
         
-        return view('vital-signs.create', compact('patient', 'admission'));
+        // Get navigation parameters for the back button
+        $from = $request->input('from');
+        $wardId = $request->input('ward_id');
+        $subsection = $request->input('subsection');
+        $consultantId = $request->input('consultant_id');
+        
+        // Construct back URL if coming from bed-map
+        $backUrl = null;
+        if ($from === 'bed-map' && $wardId) {
+            $params = [
+                'ward_id' => $wardId
+            ];
+            
+            if ($subsection !== null) {
+                $params['subsection'] = $subsection;
+            }
+            
+            if ($consultantId) {
+                $params['consultant_id'] = $consultantId;
+            }
+            
+            $backUrl = route('bed-management.bed-map', $params);
+        }
+        
+        return view('vital-signs.create', compact('patient', 'admission', 'backUrl', 'from', 'wardId', 'subsection', 'consultantId'));
     }
 } 

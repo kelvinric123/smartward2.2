@@ -67,7 +67,7 @@ class PatientController extends Controller
     /**
      * Display the specified patient.
      */
-    public function show(Patient $patient)
+    public function show(Request $request, Patient $patient)
     {
         $patient->load(['admissions' => function ($query) {
             $query->with(['bed.ward', 'transferHistory' => function($query) {
@@ -76,7 +76,31 @@ class PatientController extends Controller
             }]);
         }]);
         
-        return view('patients.show', compact('patient'));
+        // Get navigation parameters for the back button
+        $from = $request->input('from');
+        $wardId = $request->input('ward_id');
+        $subsection = $request->input('subsection');
+        $consultantId = $request->input('consultant_id');
+        
+        // Construct back URL if coming from bed-map
+        $backUrl = null;
+        if ($from === 'bed-map' && $wardId) {
+            $params = [
+                'ward_id' => $wardId
+            ];
+            
+            if ($subsection !== null) {
+                $params['subsection'] = $subsection;
+            }
+            
+            if ($consultantId) {
+                $params['consultant_id'] = $consultantId;
+            }
+            
+            $backUrl = route('bed-management.bed-map', $params);
+        }
+        
+        return view('patients.show', compact('patient', 'backUrl', 'from', 'wardId', 'subsection', 'consultantId'));
     }
 
     /**

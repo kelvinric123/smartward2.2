@@ -10,7 +10,11 @@
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 bg-white border-b border-gray-200">
                     <div class="mb-6 flex justify-between items-center">
-                        @if(request()->has('from') && request()->get('from') === 'bed-map')
+                        @if(isset($backUrl))
+                            <a href="{{ $backUrl }}" class="text-indigo-600 hover:text-indigo-900">
+                                ← Back to Bed Map
+                            </a>
+                        @elseif(request()->has('from') && request()->get('from') === 'bed-map')
                             @if(request()->has('ward_id'))
                                 <a href="{{ route('bed-management.bed-map', ['ward_id' => request()->get('ward_id')]) }}" class="text-indigo-600 hover:text-indigo-900">
                                     ← Back to Bed Map

@@ -13,7 +13,11 @@
                         @endif
                     </h2>
                     
-                    @if($patient)
+                    @if(isset($backUrl))
+                        <a href="{{ $backUrl }}" class="text-indigo-600 hover:text-indigo-900">
+                            Back to Bed Map
+                        </a>
+                    @elseif($patient)
                         <a href="{{ route('patients.show', $patient) }}" class="text-indigo-600 hover:text-indigo-900">
                             Back to Patient
                         </a>
@@ -63,6 +67,22 @@
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror
                         </div>
+                    @endif
+                    
+                    @if(isset($from))
+                        <input type="hidden" name="from" value="{{ $from }}">
+                    @endif
+                    
+                    @if(isset($wardId))
+                        <input type="hidden" name="ward_id" value="{{ $wardId }}">
+                    @endif
+                    
+                    @if(isset($subsection))
+                        <input type="hidden" name="subsection" value="{{ $subsection }}">
+                    @endif
+                    
+                    @if(isset($consultantId))
+                        <input type="hidden" name="consultant_id" value="{{ $consultantId }}">
                     @endif
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">

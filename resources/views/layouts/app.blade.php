@@ -15,8 +15,7 @@
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
         <!-- Scripts -->
-        <link rel="stylesheet" href="/build/assets/app-DZ8j-2Kn.css">
-        <script src="/build/assets/app-DQNOlDuK.js" defer></script>
+        @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body class="font-sans antialiased">
         <div class="min-h-screen bg-gray-100">
@@ -34,7 +33,11 @@
             <!-- Page Content -->
             <main>
                 {{ $slot ?? '' }}
+                @yield('content', '')
             </main>
         </div>
+        
+        <!-- Stack for page specific scripts -->
+        @stack('scripts')
     </body>
 </html>

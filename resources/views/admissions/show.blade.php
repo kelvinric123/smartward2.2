@@ -10,9 +10,15 @@
 <div class="py-2">
     <div class="max-w-7xl mx-auto">
         <div class="mb-4">
-            <a href="{{ route('beds.show', $admission->bed) }}" class="text-indigo-600 hover:text-indigo-900">
-                ← Back to Bed Details
-            </a>
+            @if(isset($backUrl))
+                <a href="{{ $backUrl }}" class="text-indigo-600 hover:text-indigo-900">
+                    ← Back to Bed Map
+                </a>
+            @else
+                <a href="{{ route('beds.show', $admission->bed) }}" class="text-indigo-600 hover:text-indigo-900">
+                    ← Back to Bed Details
+                </a>
+            @endif
         </div>
 
         <!-- Admission Information -->

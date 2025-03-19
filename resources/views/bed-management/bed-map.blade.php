@@ -185,33 +185,6 @@
             </button>
         </div>
 
-        <!-- Bed Status Legend -->
-        <div class="mb-6 bg-white p-4 rounded-lg shadow">
-            <h4 class="font-medium text-gray-700 mb-2">Bed Status Legend</h4>
-            <div class="grid grid-cols-1 md:grid-cols-5 gap-2">
-                <div class="flex items-center">
-                    <span class="w-4 h-4 bg-green-100 border border-green-300 rounded-full mr-2"></span>
-                    <span class="text-sm">Available - Ready for admission</span>
-                </div>
-                <div class="flex items-center">
-                    <span class="w-4 h-4 bg-red-100 border border-red-300 rounded-full mr-2"></span>
-                    <span class="text-sm">Occupied - Patient admitted</span>
-                </div>
-                <div class="flex items-center">
-                    <span class="w-4 h-4 bg-blue-100 border border-blue-300 rounded-full mr-2"></span>
-                    <span class="text-sm">Cleaning - After discharge</span>
-                </div>
-                <div class="flex items-center">
-                    <span class="w-4 h-4 bg-yellow-100 border border-yellow-300 rounded-full mr-2"></span>
-                    <span class="text-sm">Maintenance - Under repair</span>
-                </div>
-                <div class="flex items-center">
-                    <span class="w-4 h-4 bg-purple-100 border border-purple-300 rounded-full mr-2"></span>
-                    <span class="text-sm">Reserved - On hold</span>
-                </div>
-            </div>
-        </div>
-
         <!-- Ward Selector -->
         <div class="mb-6">
             <form action="{{ route('bed-management.bed-map') }}" method="GET" class="flex flex-wrap items-center gap-4">
@@ -239,13 +212,28 @@
                     </select>
                 </div>
                 
+                @if(isset($subsections) && count($subsections) > 0)
+                <div class="w-64">
+                    <label for="subsection" class="block text-sm font-medium text-gray-700">Ward Subsection</label>
+                    <select id="subsection" name="subsection" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                        @foreach($subsections as $index => $sectionName)
+                            <option value="{{ $index }}" {{ isset($subsection) && $subsection == $index ? 'selected' : '' }}>
+                                {{ $sectionName }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+                @elseif(isset($subsection) && $subsection !== null)
+                <input type="hidden" name="subsection" value="{{ $subsection }}">
+                @endif
+                
                 <div class="mt-5">
                     <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                         Apply Filters
                     </button>
                     
                     @if(isset($consultantId) && $consultantId)
-                        <a href="{{ route('bed-management.bed-map', ['ward_id' => $wardId ?? '']) }}" class="ml-2 inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        <a href="{{ route('bed-management.bed-map', ['ward_id' => $wardId ?? ($ward->id ?? ''), 'subsection' => $subsection ?? null]) }}" class="ml-2 inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                             Clear Consultant Filter
                         </a>
                     @endif
@@ -290,6 +278,11 @@
                                         <span class="text-sm font-medium">Filtered by consultant: {{ $filteredConsultant->name }} ({{ $beds->count() }} patients)</span>
                                     </div>
                                 @endif
+                            @endif
+                            @if(isset($subsections) && count($subsections) > 0)
+                                <div class="mt-1 bg-indigo-50 text-indigo-700 px-2 py-1 rounded-md inline-block">
+                                    <span class="text-sm font-medium">Viewing {{ $subsections[$subsection] ?? 'Unknown Section' }} - {{ $beds->count() }} beds (Total ward beds: {{ $ward->beds->count() }})</span>
+                                </div>
                             @endif
                             <p class="mt-1 max-w-2xl text-sm text-gray-500">
                                 {{ $ward->description }}
@@ -359,6 +352,24 @@
                 </div>
                 
                 <div class="px-4 py-5 sm:p-6">
+                    @if(isset($subsections) && count($subsections) > 0)
+                    <div class="mb-6 flex justify-center">
+                        <div class="inline-flex rounded-md shadow-sm" role="group">
+                            @foreach($subsections as $index => $sectionName)
+                                <a href="{{ route('bed-management.bed-map', ['ward_id' => $ward->id, 'consultant_id' => $consultantId ?? null, 'subsection' => $index]) }}"
+                                    class="px-4 py-2 text-sm font-medium 
+                                    {{ $subsection == $index 
+                                        ? 'bg-indigo-600 text-white hover:bg-indigo-700' 
+                                        : 'bg-white text-gray-700 hover:bg-gray-50 border-gray-300' }}
+                                    {{ $index === 0 ? 'rounded-l-md border' : 'border-t border-b border-r' }}
+                                    {{ $index === count($subsections) - 1 ? 'rounded-r-md' : '' }}
+                                    focus:z-10 focus:ring-2 focus:ring-indigo-500 focus:text-indigo-500">
+                                    {{ $sectionName }}
+                                </a>
+                            @endforeach
+                        </div>
+                    </div>
+                    @endif
                     <div class="bed-grid">
                         @foreach($beds as $bed)
                             <div class="bed-box relative p-4 border rounded-lg 
@@ -423,9 +434,7 @@
                                         @endphp
                                         
                                         @if($currentPatient)
-                                            <a href="{{ route('patients.show', ['patient' => $currentPatient, 'from' => 'bed-map', 'ward_id' => $ward->id]) }}" class="text-xs text-indigo-600 hover:text-indigo-900">Patient</a>
-                                            <a href="{{ route('admissions.show', $currentAdmission) }}" class="text-xs text-indigo-600 hover:text-indigo-900">Admission</a>
-                                            <a href="{{ route('vital-signs.create-for-admission', $currentAdmission) }}" class="text-xs text-red-600 hover:text-red-900 flex items-center">
+                                            <a href="{{ route('vital-signs.create-for-admission', ['admission' => $currentAdmission, 'from' => 'bed-map', 'ward_id' => $ward->id, 'subsection' => $subsection ?? null, 'consultant_id' => $consultantId ?? null]) }}" class="text-xs text-red-600 hover:text-red-900 flex items-center">
                                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                                                 </svg>
@@ -724,4 +733,3 @@
             }
         });
     </script>
-@endsection 

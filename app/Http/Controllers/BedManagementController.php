@@ -65,6 +65,7 @@ class BedManagementController extends Controller
     {
         $wardId = $request->input('ward_id');
         $consultantId = $request->input('consultant_id');
+        $subsection = $request->input('subsection');
         
         // Get all consultants for the filter dropdown
         $consultants = \App\Models\Consultant::orderBy('name')->get();
@@ -82,6 +83,29 @@ class BedManagementController extends Controller
             }
             
             $beds = $ward->beds;
+            
+            // Calculate subsections if the ward has more than 12 beds
+            $subsections = [];
+            if ($beds->count() > 12) {
+                $bedsPerSubsection = 12;
+                $totalSubsections = ceil($beds->count() / $bedsPerSubsection);
+                
+                for ($i = 0; $i < $totalSubsections; $i++) {
+                    $subsectionName = 'Section ' . ($i + 1);
+                    $subsections[$i] = $subsectionName;
+                }
+                
+                // If a subsection is selected, filter the beds accordingly
+                if ($subsection !== null && $subsection < $totalSubsections) {
+                    $start = $subsection * $bedsPerSubsection;
+                    $end = min(($subsection + 1) * $bedsPerSubsection - 1, $beds->count() - 1);
+                    $beds = $beds->slice($start, $end - $start + 1);
+                } else {
+                    // Default to first subsection if not specified and there are subsections
+                    $subsection = 0;
+                    $beds = $beds->slice(0, $bedsPerSubsection);
+                }
+            }
             
             // Filter beds by consultant if specified
             if ($consultantId) {
@@ -103,7 +127,8 @@ class BedManagementController extends Controller
             $nursesCount = $nursesOnDuty->count();
             $patientNurseRatio = $nursesCount > 0 ? round($occupiedBedsCount / $nursesCount, 1) : 0;
             
-            return view('bed-management.bed-map', compact('ward', 'beds', 'wards', 'nursesOnDuty', 'patientNurseRatio', 'consultants', 'consultantId'));
+            return view('bed-management.bed-map', compact('ward', 'beds', 'wards', 'nursesOnDuty', 
+                'patientNurseRatio', 'consultants', 'consultantId', 'subsections', 'subsection', 'wardId'));
         } else {
             $wards = Ward::with(['beds' => function ($query) {
                 $query->orderBy('bed_number');
@@ -422,14 +447,38 @@ class BedManagementController extends Controller
     /**
      * Show details of a specific admission.
      */
-    public function showAdmission(Admission $admission)
+    public function showAdmission(Request $request, Admission $admission)
     {
         $admission->load(['patient', 'bed.ward', 'consultant']);
         
         // Get vital signs
         $vitalSigns = $admission->vitalSigns()->orderBy('created_at', 'desc')->get();
         
-        return view('admissions.show', compact('admission', 'vitalSigns'));
+        // Get navigation parameters for the back button
+        $from = $request->input('from');
+        $wardId = $request->input('ward_id');
+        $subsection = $request->input('subsection');
+        $consultantId = $request->input('consultant_id');
+        
+        // Construct back URL if coming from bed-map
+        $backUrl = null;
+        if ($from === 'bed-map' && $wardId) {
+            $params = [
+                'ward_id' => $wardId
+            ];
+            
+            if ($subsection !== null) {
+                $params['subsection'] = $subsection;
+            }
+            
+            if ($consultantId) {
+                $params['consultant_id'] = $consultantId;
+            }
+            
+            $backUrl = route('bed-management.bed-map', $params);
+        }
+        
+        return view('admissions.show', compact('admission', 'vitalSigns', 'backUrl', 'from', 'wardId', 'subsection', 'consultantId'));
     }
 
     /**
