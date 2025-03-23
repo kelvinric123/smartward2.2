@@ -106,4 +106,36 @@ class Bed extends Model
 
         $this->update(['status' => 'available']);
     }
+
+    /**
+     * Get the nurses currently assigned to this bed's patient
+     * Optionally filtered by a collection of available nurses (e.g., nurses on duty)
+     *
+     * @param \Illuminate\Database\Eloquent\Collection|null $availableNurses
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public function getAssignedNurses($availableNurses = null)
+    {
+        // Check if bed is occupied
+        if (!$this->isOccupied()) {
+            return collect();
+        }
+        
+        // Get current patient
+        $patient = $this->currentPatient();
+        if (!$patient) {
+            return collect();
+        }
+        
+        // Get all nurses assigned to the patient
+        $nurses = $patient->nurses();
+        
+        // If available nurses provided, filter to only include those
+        if ($availableNurses) {
+            $availableNurseIds = $availableNurses->pluck('id')->toArray();
+            $nurses = $nurses->whereIn('nurses.id', $availableNurseIds);
+        }
+        
+        return $nurses->get();
+    }
 } 

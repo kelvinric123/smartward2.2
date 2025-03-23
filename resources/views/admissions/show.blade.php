@@ -37,18 +37,12 @@
                         </span>
                         
                         @if($admission->status === 'active')
-                            @if($admission->dischargeChecklist)
-                                <a href="{{ route('discharge-checklist.edit', $admission->dischargeChecklist) }}" class="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                                    Continue Discharge Process ({{ $admission->dischargeChecklist->completion_percentage }}%)
-                                </a>
-                            @else
-                                <form action="{{ route('admissions.start-discharge', $admission) }}" method="POST">
-                                    @csrf
-                                    <button type="submit" class="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
-                                        Start Discharge Process
-                                    </button>
-                                </form>
-                            @endif
+                            <form action="{{ route('admissions.discharge', $admission) }}" method="POST" onsubmit="return confirm('Are you sure you want to discharge this patient?');">
+                                @csrf
+                                <button type="submit" class="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                                    Discharge Patient
+                                </button>
+                            </form>
                         @endif
                     </div>
                 </div>
@@ -194,9 +188,13 @@
             <div class="p-6 bg-white border-b border-gray-200">
                 <div class="flex justify-between items-center mb-6">
                     <h2 class="text-xl font-semibold text-gray-800">Vital Signs</h2>
-                    <a href="{{ route('vital-signs.create-for-admission', $admission) }}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                        Record New Vital Signs
-                    </a>
+                    <div class="mt-6 flex space-x-3">
+                        @if($admission->status === 'active')
+                            <a href="{{ route('vital-signs.create-for-admission', $admission) }}" class="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                Record Vital Signs
+                            </a>
+                        @endif
+                    </div>
                 </div>
                 
                 @if($vitalSigns && $vitalSigns->count() > 0)

@@ -62,4 +62,12 @@ class Ward extends Model
         
         return ($this->getOccupiedBedsCount() / $this->capacity) * 100;
     }
+
+    /**
+     * Get the shift schedules for this ward.
+     */
+    public function shiftSchedules()
+    {
+        return $this->hasMany(ShiftSchedule::class);
+    }
 } 

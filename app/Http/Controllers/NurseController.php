@@ -49,7 +49,6 @@ class NurseController extends Controller
     public function create()
     {
         return view('nurses.create', [
-            'shiftOptions' => Nurse::getShiftOptions(),
             'statusOptions' => Nurse::getStatusOptions(),
             'wards' => Ward::orderBy('name')->get(),
         ]);
@@ -67,13 +66,15 @@ class NurseController extends Controller
             'name' => 'required|string|max:255',
             'position' => 'required|string|max:255',
             'ward_assignment' => 'required|string|max:255',
-            'shift' => 'required|string|in:' . implode(',', Nurse::getShiftOptions()),
             'status' => 'required|string|in:' . implode(',', Nurse::getStatusOptions()),
             'contact_number' => 'nullable|string|max:20',
             'email' => 'nullable|email|max:255',
             'employment_date' => 'nullable|date',
             'notes' => 'nullable|string',
         ]);
+
+        // Add default value for shift field
+        $validated['shift'] = 'Custom';
 
         Nurse::create($validated);
 
@@ -102,7 +103,6 @@ class NurseController extends Controller
     {
         return view('nurses.edit', [
             'nurse' => $nurse,
-            'shiftOptions' => Nurse::getShiftOptions(),
             'statusOptions' => Nurse::getStatusOptions(),
             'wards' => Ward::orderBy('name')->get(),
         ]);
@@ -121,13 +121,15 @@ class NurseController extends Controller
             'name' => 'required|string|max:255',
             'position' => 'required|string|max:255',
             'ward_assignment' => 'required|string|max:255',
-            'shift' => 'required|string|in:' . implode(',', Nurse::getShiftOptions()),
             'status' => 'required|string|in:' . implode(',', Nurse::getStatusOptions()),
             'contact_number' => 'nullable|string|max:20',
             'email' => 'nullable|email|max:255',
             'employment_date' => 'nullable|date',
             'notes' => 'nullable|string',
         ]);
+
+        // Keep the existing shift value when updating
+        $validated['shift'] = $nurse->shift;
 
         $nurse->update($validated);
 
@@ -144,9 +146,9 @@ class NurseController extends Controller
     public function deactivate(Nurse $nurse)
     {
         $nurse->update(['status' => 'Off Duty']);
-
+        
         return redirect()->route('nurses.index')
-            ->with('success', 'Nurse deactivated successfully.');
+            ->with('success', 'Nurse has been deactivated successfully');
     }
 
     /**
@@ -161,5 +163,63 @@ class NurseController extends Controller
 
         return redirect()->route('nurses.index')
             ->with('success', 'Nurse deleted successfully.');
+    }
+
+    /**
+     * Assign a nurse to a patient.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function assignToPatient(Request $request)
+    {
+        $validated = $request->validate([
+            'nurse_id' => 'required|exists:nurses,id',
+            'patient_id' => 'required|exists:patients,id',
+            'redirect_to' => 'nullable|string'
+        ]);
+        
+        $nurse = Nurse::findOrFail($validated['nurse_id']);
+        $patient = \App\Models\Patient::findOrFail($validated['patient_id']);
+        
+        // Check if the nurse is already assigned to this patient
+        if (!$nurse->patients()->where('patient_id', $patient->id)->exists()) {
+            $nurse->patients()->attach($patient->id);
+            $message = "Nurse {$nurse->name} has been assigned to patient {$patient->full_name}";
+        } else {
+            $message = "Nurse {$nurse->name} is already assigned to patient {$patient->full_name}";
+        }
+        
+        // Redirect back to referring page or to a default page
+        $redirectTo = $validated['redirect_to'] ?? route('patients.show', $patient);
+        
+        return redirect($redirectTo)
+            ->with('success', $message);
+    }
+    
+    /**
+     * Unassign a nurse from a patient.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function unassignFromPatient(Request $request)
+    {
+        $validated = $request->validate([
+            'nurse_id' => 'required|exists:nurses,id',
+            'patient_id' => 'required|exists:patients,id',
+            'redirect_to' => 'nullable|string'
+        ]);
+        
+        $nurse = Nurse::findOrFail($validated['nurse_id']);
+        $patient = \App\Models\Patient::findOrFail($validated['patient_id']);
+        
+        $nurse->patients()->detach($patient->id);
+        
+        // Redirect back to referring page or to a default page
+        $redirectTo = $validated['redirect_to'] ?? route('patients.show', $patient);
+        
+        return redirect($redirectTo)
+            ->with('success', "Nurse {$nurse->name} has been unassigned from patient {$patient->full_name}");
     }
 } 

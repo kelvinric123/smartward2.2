@@ -45,17 +45,4 @@ class MedicalProfessionalController extends Controller
         
         return redirect()->route('nurses.index');
     }
-    
-    /**
-     * Display the nurse roster management page.
-     *
-     * @return \Illuminate\Http\RedirectResponse
-     */
-    public function roster()
-    {
-        // Add debug log
-        Log::info('Nurse roster method reached');
-        
-        return redirect()->route('roster.index');
-    }
 } 

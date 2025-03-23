@@ -117,10 +117,47 @@ class BedManagementController extends Controller
             
             $wards = Ward::all();
             
-            // Get nurses on duty for this ward
-            $nursesOnDuty = \App\Models\Nurse::where('ward_assignment', $ward->name)
-                ->where('status', 'On Duty')
-                ->get();
+            // Get nurses on duty for this ward based on shift schedules
+            $now = now();
+            $currentTime = $now->format('H:i:s');
+            $today = $now->format('Y-m-d');
+            
+            $nursesOnDuty = \App\Models\Nurse::whereHas('shiftSchedules', function($query) use ($wardId, $today, $currentTime) {
+                $query->where('ward_id', $wardId)
+                      ->where('schedule_date', $today)
+                      ->where('status', '!=', 'cancelled')
+                      ->where('start_time', '<=', $currentTime)
+                      ->where('end_time', '>=', $currentTime);
+            })->get();
+            
+            // Associate nurses with beds based on patient assignments using the Bed model method
+            $nursesPerBed = [];
+            $occupiedBeds = $beds->where('status', 'occupied');
+            
+            foreach ($occupiedBeds as $bed) {
+                $nursesPerBed[$bed->id] = $bed->getAssignedNurses($nursesOnDuty);
+            }
+            
+            // For beds that have no assigned nurses, distribute remaining nurses evenly
+            $unassignedBeds = $occupiedBeds->filter(function($bed) use ($nursesPerBed) {
+                return $nursesPerBed[$bed->id]->isEmpty();
+            });
+            
+            if ($unassignedBeds->count() > 0 && $nursesOnDuty->count() > 0) {
+                // Get nurses not yet assigned to any patients
+                $assignedNurseIds = collect($nursesPerBed)->flatten()->pluck('id')->unique()->toArray();
+                $unassignedNurses = $nursesOnDuty->reject(function($nurse) use ($assignedNurseIds) {
+                    return in_array($nurse->id, $assignedNurseIds);
+                });
+                
+                // Distribute nurses evenly
+                if ($unassignedNurses->count() > 0) {
+                    foreach ($unassignedBeds as $index => $bed) {
+                        $nurseIndex = $index % $unassignedNurses->count();
+                        $nursesPerBed[$bed->id] = collect([$unassignedNurses[$nurseIndex]]);
+                    }
+                }
+            }
             
             // Calculate patient-to-nurse ratio
             $occupiedBedsCount = $beds->where('status', 'occupied')->count();
@@ -128,7 +165,7 @@ class BedManagementController extends Controller
             $patientNurseRatio = $nursesCount > 0 ? round($occupiedBedsCount / $nursesCount, 1) : 0;
             
             return view('bed-management.bed-map', compact('ward', 'beds', 'wards', 'nursesOnDuty', 
-                'patientNurseRatio', 'consultants', 'consultantId', 'subsections', 'subsection', 'wardId'));
+                'patientNurseRatio', 'consultants', 'consultantId', 'subsections', 'subsection', 'wardId', 'nursesPerBed'));
         } else {
             $wards = Ward::with(['beds' => function ($query) {
                 $query->orderBy('bed_number');
@@ -155,9 +192,18 @@ class BedManagementController extends Controller
             // Get ward stats including nurses on duty and patient-to-nurse ratios
             $wardStats = collect();
             foreach ($wards as $ward) {
-                $nursesOnDuty = \App\Models\Nurse::where('ward_assignment', $ward->name)
-                    ->where('status', 'On Duty')
-                    ->get();
+                // Get nurses on duty for this ward based on shift schedules
+                $now = now();
+                $currentTime = $now->format('H:i:s');
+                $today = $now->format('Y-m-d');
+                
+                $nursesOnDuty = \App\Models\Nurse::whereHas('shiftSchedules', function($query) use ($ward, $today, $currentTime) {
+                    $query->where('ward_id', $ward->id)
+                          ->where('schedule_date', $today)
+                          ->where('status', '!=', 'cancelled')
+                          ->where('start_time', '<=', $currentTime)
+                          ->where('end_time', '>=', $currentTime);
+                })->get();
                 
                 $occupiedBedsCount = $ward->beds->where('status', 'occupied')->count();
                 $nursesCount = $nursesOnDuty->count();
@@ -411,15 +457,13 @@ class BedManagementController extends Controller
      */
     public function markCleaningComplete(Bed $bed)
     {
-        // Only allow this action if the bed is in cleaning status
         if ($bed->status !== 'cleaning') {
-            return redirect()->back()->with('error', 'This action is only valid for beds in cleaning status.');
+            return redirect()->back()->with('error', 'Bed is not currently in cleaning status.');
         }
         
-        // Update the bed status to available
         $bed->update(['status' => 'available']);
         
-        return redirect()->back()->with('success', 'Bed cleaning completed and marked as available.');
+        return redirect()->back()->with('success', 'Cleaning marked as complete. Bed is now available for new admissions.');
     }
 
     /**
@@ -550,5 +594,24 @@ class BedManagementController extends Controller
         $bed->update($validated);
         
         return redirect()->route('beds.show', $bed)->with('success', 'Bed updated successfully.');
+    }
+
+    /**
+     * Discharge a patient directly from the admission.
+     */
+    public function dischargePatient(Request $request, Admission $admission)
+    {
+        if ($admission->status !== 'active') {
+            return redirect()->back()->with('error', 'This patient is already discharged.');
+        }
+        
+        $validated = $request->validate([
+            'notes' => 'nullable|string',
+        ]);
+        
+        // Discharge the patient
+        $admission->discharge($validated['notes'] ?? null);
+        
+        return redirect()->back()->with('success', 'Patient has been discharged successfully.');
     }
 } 

@@ -224,6 +224,11 @@
                             <h4 class="font-medium">Patients</h4>
                             <p class="text-sm text-gray-600">Manage patient records</p>
                         </a>
+                        
+                        <a href="{{ route('shift-schedule.dashboard') }}" class="block p-4 bg-gray-100 rounded hover:bg-gray-200">
+                            <h4 class="font-medium">Nurse Scheduling</h4>
+                            <p class="text-sm text-gray-600">Manage nurse shift schedules</p>
+                        </a>
                     @endif
                 </div>
             </div>

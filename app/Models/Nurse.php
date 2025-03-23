@@ -57,6 +57,40 @@ class Nurse extends Model
     }
     
     /**
+     * Get the standard times for each shift type.
+     *
+     * @param string $shift
+     * @return array with start_time and end_time keys
+     */
+    public static function getShiftTimes($shift = null)
+    {
+        $times = [
+            'Morning' => [
+                'start_time' => '07:00',
+                'end_time' => '15:00'
+            ],
+            'Evening' => [
+                'start_time' => '15:00',
+                'end_time' => '23:00'
+            ],
+            'Night' => [
+                'start_time' => '23:00',
+                'end_time' => '07:00'
+            ],
+            'Custom' => [
+                'start_time' => '',
+                'end_time' => ''
+            ]
+        ];
+        
+        if ($shift && isset($times[$shift])) {
+            return $times[$shift];
+        }
+        
+        return $times;
+    }
+    
+    /**
      * Get the possible status options for a nurse.
      *
      * @return array
@@ -87,5 +121,13 @@ class Nurse extends Model
     {
         return $this->belongsToMany(Patient::class, 'nurse_patient')
             ->withTimestamps();
+    }
+    
+    /**
+     * Get the shift schedules for this nurse.
+     */
+    public function shiftSchedules()
+    {
+        return $this->hasMany(ShiftSchedule::class);
     }
 } 

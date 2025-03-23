@@ -87,16 +87,6 @@
                                             <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
                                                 Currently Admitted
                                             </span>
-                                            @if($patient->activeAdmission() && $patient->activeAdmission()->dischargeChecklist)
-                                                <div class="mt-1">
-                                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-orange-100 text-orange-800">
-                                                        Discharge in Progress ({{ $patient->activeAdmission()->dischargeChecklist->completion_percentage }}%)
-                                                    </span>
-                                                    <a href="{{ route('discharge-checklist.edit', $patient->activeAdmission()->dischargeChecklist) }}" class="ml-1 text-xs text-indigo-600 hover:text-indigo-900">
-                                                        Continue Discharge Process
-                                                    </a>
-                                                </div>
-                                            @endif
                                         @else
                                             <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
                                                 Not Admitted
@@ -290,13 +280,6 @@
                                                         <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
                                                             Active
                                                         </span>
-                                                        @if($admission->dischargeChecklist)
-                                                            <div class="mt-1">
-                                                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-orange-100 text-orange-800">
-                                                                    Discharge in Progress ({{ $admission->dischargeChecklist->completion_percentage }}%)
-                                                                </span>
-                                                            </div>
-                                                        @endif
                                                     @endif
                                                 </td>
                                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
@@ -306,16 +289,10 @@
                                                     <a href="{{ route('admissions.show', $admission) }}" class="text-indigo-600 hover:text-indigo-900">View</a>
                                                     
                                                     @if($admission->status === 'active')
-                                                        @if($admission->dischargeChecklist)
-                                                            <a href="{{ route('discharge-checklist.edit', $admission->dischargeChecklist) }}" class="ml-3 text-orange-600 hover:text-orange-900">Continue Discharge</a>
-                                                        @else
-                                                            <form action="{{ route('admissions.start-discharge', $admission) }}" method="POST" class="inline-block ml-3">
-                                                                @csrf
-                                                                <button type="submit" class="text-orange-600 hover:text-orange-900 bg-transparent border-0 p-0 cursor-pointer">Start Discharge</button>
-                                                            </form>
-                                                        @endif
-                                                    @elseif($admission->status === 'discharged' && $admission->dischargeChecklist)
-                                                        <a href="{{ route('discharge-checklist.show', $admission->dischargeChecklist) }}" class="ml-3 text-gray-600 hover:text-gray-900">View Checklist</a>
+                                                        <form action="{{ route('admissions.discharge', $admission) }}" method="POST" class="inline-block ml-3" onsubmit="return confirm('Are you sure you want to discharge this patient?');">
+                                                            @csrf
+                                                            <button type="submit" class="text-red-600 hover:text-red-900 bg-transparent border-0 p-0 cursor-pointer">Discharge</button>
+                                                        </form>
                                                     @endif
                                                 </td>
                                             </tr>

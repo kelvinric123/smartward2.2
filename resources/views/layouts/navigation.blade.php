@@ -73,8 +73,8 @@
                             <x-dropdown-link :href="route('medical-professional.nurses')">
                                 {{ __('Nurses') }}
                             </x-dropdown-link>
-                            <x-dropdown-link :href="route('medical-professional.roster')">
-                                {{ __('Nurse Roster') }}
+                            <x-dropdown-link href="/shift-schedule-direct/dashboard">
+                                {{ __('Shift Scheduling') }}
                             </x-dropdown-link>
                         </x-slot>
                     </x-dropdown>
@@ -88,12 +88,12 @@
                         {{ __('Bed Map') }}
                     </x-nav-link>
                     
-                    <x-nav-link :href="route('bed-management.statistics')" :active="request()->routeIs('bed-management.statistics')">
-                        {{ __('Statistics') }}
+                    <x-nav-link :href="route('patient-panel.index')" :active="request()->routeIs('patient-panel.*')">
+                        {{ __('Patient Panel') }}
                     </x-nav-link>
                     
-                    <x-nav-link :href="route('discharge-checklist.index')" :active="request()->routeIs('discharge-checklist.*')">
-                        {{ __('Discharge Checklists') }}
+                    <x-nav-link :href="route('bed-management.statistics')" :active="request()->routeIs('bed-management.statistics')">
+                        {{ __('Statistics') }}
                     </x-nav-link>
                 </div>
             </div>
@@ -186,8 +186,8 @@
             <x-responsive-nav-link :href="route('medical-professional.nurses')" :active="request()->routeIs('medical-professional.nurses')">
                 {{ __('Nurses') }}
             </x-responsive-nav-link>
-            <x-responsive-nav-link :href="route('medical-professional.roster')" :active="request()->routeIs('medical-professional.roster')">
-                {{ __('Nurse Roster') }}
+            <x-responsive-nav-link href="/shift-schedule-direct/dashboard" :active="request()->is('shift-schedule-direct/dashboard')">
+                {{ __('Shift Scheduling') }}
             </x-responsive-nav-link>
             
             <!-- Responsive Bed Management Navigation -->
@@ -199,12 +199,12 @@
                 {{ __('Bed Map') }}
             </x-responsive-nav-link>
             
-            <x-responsive-nav-link :href="route('bed-management.statistics')" :active="request()->routeIs('bed-management.statistics')">
-                {{ __('Statistics') }}
+            <x-responsive-nav-link :href="route('patient-panel.index')" :active="request()->routeIs('patient-panel.*')">
+                {{ __('Patient Panel') }}
             </x-responsive-nav-link>
             
-            <x-responsive-nav-link :href="route('discharge-checklist.index')" :active="request()->routeIs('discharge-checklist.*')">
-                {{ __('Discharge Checklists') }}
+            <x-responsive-nav-link :href="route('bed-management.statistics')" :active="request()->routeIs('bed-management.statistics')">
+                {{ __('Statistics') }}
             </x-responsive-nav-link>
         </div>
 

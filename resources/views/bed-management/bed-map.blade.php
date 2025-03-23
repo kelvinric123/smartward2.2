@@ -322,14 +322,33 @@
                                 @if(count($nursesOnDuty) > 0)
                                     <div class="flex flex-wrap gap-2">
                                         @foreach($nursesOnDuty as $nurse)
-                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                                {{ $nurse->name }}
+                                            @php
+                                                $nurseShift = $nurse->shiftSchedules()
+                                                    ->where('ward_id', $ward->id)
+                                                    ->where('schedule_date', now()->format('Y-m-d'))
+                                                    ->where('status', '!=', 'cancelled')
+                                                    ->where('start_time', '<=', now()->format('H:i:s'))
+                                                    ->where('end_time', '>=', now()->format('H:i:s'))
+                                                    ->first();
+                                            @endphp
+                                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                                <span class="font-semibold">{{ $nurse->name }}</span>
+                                                @if($nurseShift)
+                                                    <span class="ml-1 text-blue-600">
+                                                        ({{ $nurseShift->shift }} {{ date('g:i A', strtotime($nurseShift->start_time)) }}-{{ date('g:i A', strtotime($nurseShift->end_time)) }})
+                                                    </span>
+                                                @endif
                                             </span>
                                         @endforeach
                                     </div>
                                 @else
                                     <p class="text-sm text-gray-500">No nurses currently on duty</p>
                                 @endif
+                            </div>
+                            <div class="mt-3">
+                                <button id="viewShiftScheduleBtn" onclick="window.location.href='{{ route('shift-schedule.ward', $ward) }}'" class="px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 focus:outline-none">
+                                    View Full Shift Schedule
+                                </button>
                             </div>
                         </div>
                         <div class="mt-3 sm:mt-0">
@@ -418,6 +437,32 @@
                                                         @endif
                                                     </div>
                                                 @endif
+                                                
+                                                <!-- Assigned Nurses Section -->
+                                                @if(isset($nursesPerBed) && isset($nursesPerBed[$bed->id]) && $nursesPerBed[$bed->id]->count() > 0)
+                                                    <div class="mt-1">
+                                                        <div class="text-xs text-blue-600 font-medium">Assigned Nurse(s):</div>
+                                                        <div class="flex flex-wrap gap-1 mt-0.5">
+                                                            @foreach($nursesPerBed[$bed->id] as $assignedNurse)
+                                                                <span class="px-1.5 py-0.5 bg-blue-50 text-xs text-blue-700 rounded">
+                                                                    {{ $assignedNurse->name }}
+                                                                </span>
+                                                            @endforeach
+                                                        </div>
+                                                    </div>
+                                                @endif
+
+                                                <!-- Nurse Assignment Button -->
+                                                <div class="mt-2">
+                                                    <button type="button" 
+                                                            class="inline-flex items-center px-2 py-1 border border-blue-300 text-xs leading-4 font-medium rounded text-blue-700 bg-blue-50 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                                                            onclick="openAssignNurseModal({{ $currentPatient->id }}, '{{ $currentPatient->full_name }}', '{{ $bed->bed_number }}', {{ $bed->id }})">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                                        </svg>
+                                                        Assign Nurse
+                                                    </button>
+                                                </div>
                                             </div>
                                         @endif
                                     @endif
@@ -736,4 +781,115 @@
         });
     </script>
     </div>
+    
+    <!-- Fullscreen footer -->
+    <div class="fullscreen-footer">
+        <div>
+            <span class="text-sm">SmartWard Bed Management</span>
+        </div>
+        <div>
+            <button id="exitFullscreenBtn" class="text-sm text-indigo-600 hover:text-indigo-800">Exit Fullscreen</button>
+        </div>
+    </div>
+    
+    <!-- Assign Nurse Modal -->
+    <div id="assignNurseModal" class="fixed inset-0 overflow-y-auto hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <!-- Background overlay -->
+            <div id="assignNurseModalOverlay" class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+            
+            <!-- Modal panel -->
+            <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                <form id="assignNurseForm" action="{{ route('nurses.assign-to-patient') }}" method="POST">
+                    @csrf
+                    <input type="hidden" id="patientIdInput" name="patient_id" value="">
+                    <input type="hidden" id="redirectToInput" name="redirect_to" value="{{ url()->full() }}">
+                    
+                    <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                        <div class="sm:flex sm:items-start">
+                            <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 sm:mx-0 sm:h-10 sm:w-10">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                                </svg>
+                            </div>
+                            <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                                <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">
+                                    Assign Nurse to Patient
+                                </h3>
+                                <div class="mt-2">
+                                    <p class="text-sm text-gray-500" id="patientName"></p>
+                                    <p class="text-sm text-gray-500">Bed: <span id="bedNumber"></span></p>
+                                    
+                                    <div class="mt-4">
+                                        <label for="nurseSelect" class="block text-sm font-medium text-gray-700">Select Nurse</label>
+                                        <select id="nurseSelect" name="nurse_id" class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                                            @if(isset($nursesOnDuty) && $nursesOnDuty->count() > 0)
+                                                @foreach($nursesOnDuty as $nurse)
+                                                    <option value="{{ $nurse->id }}">{{ $nurse->name }}</option>
+                                                @endforeach
+                                            @else
+                                                <option disabled>No nurses on duty</option>
+                                            @endif
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                        <button type="submit" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm">
+                            Assign
+                        </button>
+                        <button type="button" id="cancelAssignNurse" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                            Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Modal functionality
+        function openAssignNurseModal(patientId, patientFullName, bedNum, bedId) {
+            document.getElementById('patientIdInput').value = patientId;
+            document.getElementById('patientName').textContent = 'Patient: ' + patientFullName;
+            document.getElementById('bedNumber').textContent = bedNum;
+            document.getElementById('assignNurseModal').classList.remove('hidden');
+        }
+        
+        document.getElementById('assignNurseModalOverlay').addEventListener('click', function() {
+            document.getElementById('assignNurseModal').classList.add('hidden');
+        });
+        
+        document.getElementById('cancelAssignNurse').addEventListener('click', function() {
+            document.getElementById('assignNurseModal').classList.add('hidden');
+        });
+        
+        // Full screen functionality
+        const container = document.getElementById('fullscreenContainer');
+        const fullscreenBtn = document.getElementById('fullscreenBtn');
+        const exitFullscreenBtn = document.getElementById('exitFullscreenBtn');
+        
+        if (fullscreenBtn) {
+            fullscreenBtn.addEventListener('click', function() {
+                if (!document.fullscreenElement) {
+                    container.requestFullscreen().catch(err => {
+                        console.log(`Error attempting to enable full-screen mode: ${err.message}`);
+                    });
+                } else {
+                    document.exitFullscreen();
+                }
+            });
+        }
+        
+        if (exitFullscreenBtn) {
+            exitFullscreenBtn.addEventListener('click', function() {
+                if (document.fullscreenElement) {
+                    document.exitFullscreen();
+                }
+            });
+        }
+    </script>
+</div>
 @endsection

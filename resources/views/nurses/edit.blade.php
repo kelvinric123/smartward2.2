@@ -46,18 +46,6 @@
                         </div>
                         
                         <div class="mb-4">
-                            <label for="shift" class="block text-sm font-medium text-gray-700">Shift</label>
-                            <select name="shift" id="shift" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
-                                @foreach($shiftOptions as $shift)
-                                    <option value="{{ $shift }}" {{ old('shift', $nurse->shift) == $shift ? 'selected' : '' }}>{{ $shift }}</option>
-                                @endforeach
-                            </select>
-                            @error('shift')
-                                <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                            @enderror
-                        </div>
-                        
-                        <div class="mb-4">
                             <label for="status" class="block text-sm font-medium text-gray-700">Status</label>
                             <select name="status" id="status" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
                                 @foreach($statusOptions as $status)

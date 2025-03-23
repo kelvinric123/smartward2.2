@@ -8,6 +8,8 @@ use App\Http\Controllers\ConsultantController;
 use App\Http\Controllers\VitalSignController;
 use App\Http\Controllers\NurseController;
 use App\Http\Controllers\RosterController;
+use App\Http\Controllers\ShiftScheduleController;
+use App\Http\Controllers\PatientPanelController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -48,20 +50,34 @@ Route::middleware('auth')->group(function () {
     // Nurse Management Routes
     Route::resource('nurses', NurseController::class);
     Route::patch('/nurses/{nurse}/deactivate', [NurseController::class, 'deactivate'])->name('nurses.deactivate');
+    Route::post('/nurses/assign-to-patient', [NurseController::class, 'assignToPatient'])->name('nurses.assign-to-patient');
+    Route::post('/nurses/unassign-from-patient', [NurseController::class, 'unassignFromPatient'])->name('nurses.unassign-from-patient');
 
-    // Nurse Roster Management Routes
+    // Nurse Roster Management Routes - Disabled as per requirements
+    /*
     Route::get('/roster', [RosterController::class, 'index'])->name('roster.index');
     Route::get('/roster/{nurse}/edit', [RosterController::class, 'edit'])->name('roster.edit');
     Route::patch('/roster/{nurse}', [RosterController::class, 'update'])->name('roster.update');
     Route::get('/roster/ward/{wardName}', [RosterController::class, 'wardRoster'])->name('roster.ward');
+    */
     
     // Medical Professional Routes - Accessible to doctor, admin, and superadmin roles
     Route::middleware('role:doctor')->group(function() {
         Route::get('/medical-professional/consultants', [MedicalProfessionalController::class, 'consultants'])->name('medical-professional.consultants');
         Route::get('/medical-professional/nurses', [MedicalProfessionalController::class, 'nurses'])->name('medical-professional.nurses');
-        Route::get('/medical-professional/roster', [MedicalProfessionalController::class, 'roster'])->name('medical-professional.roster');
-        
-        // OT Scheduling Routes
+    });
+    
+    // Nurse Shift Schedule Routes - Accessible to nurse, doctor, admin, and superadmin roles
+    Route::middleware('role:nurse')->group(function() {
+        // Nurse Shift Schedule Routes
+        Route::resource('shift-schedule', ShiftScheduleController::class);
+        Route::get('/shift-schedule/dashboard', [ShiftScheduleController::class, 'dashboard'])->name('shift-schedule.dashboard');
+        Route::get('/shift-schedule/ward/{ward}', [ShiftScheduleController::class, 'wardSchedule'])->name('shift-schedule.ward');
+        Route::get('/shift-schedule/nurse/{nurse}', [ShiftScheduleController::class, 'nurseSchedule'])->name('shift-schedule.nurse');
+    });
+    
+    // OT Scheduling Routes
+    Route::middleware('role:doctor')->group(function() {
         Route::get('/ot-scheduling/dashboard', [App\Http\Controllers\OTSchedulingController::class, 'dashboard'])->name('ot-scheduling.dashboard');
         Route::get('/ot-scheduling/bookings', [App\Http\Controllers\OTSchedulingController::class, 'bookings'])->name('ot-scheduling.bookings');
         Route::get('/ot-scheduling/bookings/create', [App\Http\Controllers\OTSchedulingController::class, 'createBooking'])->name('ot-scheduling.create-booking');
@@ -106,6 +122,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/beds/{bed}/admit', [BedManagementController::class, 'admitForm'])->name('beds.admit-form');
         Route::post('/beds/{bed}/admit', [BedManagementController::class, 'admitToBed'])->name('beds.admit');
         Route::get('/admissions/{admission}', [BedManagementController::class, 'showAdmission'])->name('admissions.show');
+        Route::post('/admissions/{admission}/discharge', [BedManagementController::class, 'dischargePatient'])->name('admissions.discharge');
     });
     
     // Patient Routes - Accessible to nurse, doctor, admin, and superadmin roles
@@ -131,14 +148,12 @@ Route::middleware('auth')->group(function () {
         Route::delete('/vital-signs/{vitalSign}', [VitalSignController::class, 'destroy'])->name('vital-signs.destroy');
         Route::get('/admissions/{admission}/vital-signs/create', [VitalSignController::class, 'createForAdmission'])->name('vital-signs.create-for-admission');
         
-        // Discharge Checklist Routes
-        Route::get('/discharge-checklists', [App\Http\Controllers\DischargeChecklistController::class, 'index'])->name('discharge-checklist.index');
-        Route::get('/discharge-checklists/{dischargeChecklist}', [App\Http\Controllers\DischargeChecklistController::class, 'show'])->name('discharge-checklist.show');
-        Route::get('/discharge-checklists/{dischargeChecklist}/edit', [App\Http\Controllers\DischargeChecklistController::class, 'edit'])->name('discharge-checklist.edit');
-        Route::patch('/discharge-checklists/{dischargeChecklist}', [App\Http\Controllers\DischargeChecklistController::class, 'update'])->name('discharge-checklist.update');
-        Route::post('/discharge-checklists/{dischargeChecklist}/complete', [App\Http\Controllers\DischargeChecklistController::class, 'completeDischarge'])->name('discharge-checklist.complete');
-        Route::post('/discharge-checklists/{dischargeChecklist}/complete-item/{item}', [App\Http\Controllers\DischargeChecklistController::class, 'completeItem'])->name('discharge-checklist.complete-item');
-        Route::post('/admissions/{admission}/start-discharge', [App\Http\Controllers\DischargeChecklistController::class, 'startDischargeProcess'])->name('admissions.start-discharge');
+        // Patient Panel Routes
+        Route::get('/patient-panel', [PatientPanelController::class, 'index'])->name('patient-panel.index');
+        Route::get('/patient-panel/{bed}', [PatientPanelController::class, 'show'])->name('patient-panel.show');
+        
+        // Patient Panel Health Education
+        Route::get('/patient-panel/{bed}/health-education', [App\Http\Controllers\HealthEducationController::class, 'patientPanelView'])->name('patient-panel.health-education');
     });
 });
 
@@ -162,5 +177,26 @@ Route::middleware('auth')->get('/debug/user-role', function() {
         'is_superadmin' => $user->isSuperAdmin(),
     ]);
 });
+
+// Direct test route for shift-schedule dashboard
+Route::middleware('auth')->get('/shift-schedule-test', [ShiftScheduleController::class, 'dashboard'])
+    ->name('shift-schedule.test');
+
+// Simple test route
+Route::get('/test', function () {
+    return 'Test route works!';
+});
+
+// Test controller routes
+Route::get('/test-controller', [App\Http\Controllers\ShiftScheduleTestController::class, 'simpleTest']);
+Route::get('/test-dashboard', [App\Http\Controllers\ShiftScheduleTestController::class, 'testDashboard']);
+
+// Direct access to shift schedule dashboard without middleware
+Route::get('/shift-schedule-direct/dashboard', [ShiftScheduleController::class, 'dashboard']);
+
+// Health Education Routes
+Route::get('/health', [App\Http\Controllers\HealthEducationController::class, 'index'])->name('health.index');
+Route::get('/health/resources/{type}/{title}', [App\Http\Controllers\HealthEducationController::class, 'resources'])->name('health.resources');
+Route::get('/health/contact', [App\Http\Controllers\HealthEducationController::class, 'contact'])->name('health.contact');
 
 require __DIR__.'/auth.php';
